@@ -1,0 +1,160 @@
+{
+  "books": [
+    {
+      "id": "moroccan-fable-lantern",
+      "title": "The Lantern of the Old Medina",
+      "titleAr": "قنديل المدينة القديمة",
+      "author": "Original demo story",
+      "language": "en",
+      "category": "Moroccan story",
+      "description": "A short original story inspired by Moroccan medinas and community reading.",
+      "totalPages": 2,
+      "coverEmoji": "🕯️",
+      "accentColor": "#E35D5B",
+      "hasSigml": true,
+      "sigmlCoverage": 0.42,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "In the old medina, a small lantern hung beside a wooden door. Every evening, children gathered below it while Amina read stories aloud. Youssef could not see the page, but he knew each voice, each pause, and each smile.",
+          "wordCount": 39
+        },
+        {
+          "pageNumber": 2,
+          "content": "One night the lantern went dark. The children did not leave. Amina placed the book in Youssef's hands and said, \"Tonight, we listen together.\" The story continued, carried by memory, touch, and friendship.",
+          "wordCount": 36
+        }
+      ]
+    },
+    {
+      "id": "arabic-garden",
+      "title": "Garden of Words",
+      "titleAr": "حديقة الكلمات",
+      "author": "Original Arabic demo text",
+      "language": "ar",
+      "category": "Arabic",
+      "description": "نص عربي قصير للتجربة الصوتية والبصرية داخل التطبيق.",
+      "totalPages": 2,
+      "coverEmoji": "🌿",
+      "accentColor": "#159A8C",
+      "hasSigml": true,
+      "sigmlCoverage": 0.55,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "في الصباح فتحت ليلى كتابها قرب النافذة. لم تكن الحروف وحدها مهمة، بل كان الصوت الذي يحمل المعنى إلى القلب. قالت ليلى: القراءة حق للجميع.",
+          "wordCount": 25
+        },
+        {
+          "pageNumber": 2,
+          "content": "عندما سمعت الجدة القصة ابتسمت، ثم أشارت بيديها إلى كلمة أمل. فهم الأطفال أن اللغة يمكن أن تكون صوتا، وصورة، وحركة.",
+          "wordCount": 23
+        }
+      ]
+    },
+    {
+      "id": "french-sea",
+      "title": "La Mer et le Livre",
+      "titleAr": null,
+      "author": "Texte original de démonstration",
+      "language": "fr",
+      "category": "French",
+      "description": "Un court texte français pour tester la lecture vocale et visuelle.",
+      "totalPages": 2,
+      "coverEmoji": "🌊",
+      "accentColor": "#3B7EA1",
+      "hasSigml": false,
+      "sigmlCoverage": 0.18,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "Près de la mer, Sami ouvrit un petit livre bleu. Il ne lisait pas vite, mais chaque phrase avançait comme une vague douce sur le sable.",
+          "wordCount": 27
+        },
+        {
+          "pageNumber": 2,
+          "content": "Sa sœur lui montra les mots importants avec ses mains. Sami sourit: le livre parlait maintenant avec la voix, les yeux et les gestes.",
+          "wordCount": 26
+        }
+      ]
+    },
+    {
+      "id": "arabic-souk",
+      "title": "Voices of the Souk",
+      "titleAr": "أصوات السوق",
+      "author": "Original Moroccan demo text",
+      "language": "ar",
+      "category": "Moroccan story",
+      "description": "قصة قصيرة من وحي السوق المغربي، مناسبة للتجربة دون إنترنت.",
+      "totalPages": 2,
+      "coverEmoji": "🧺",
+      "accentColor": "#D9902F",
+      "hasSigml": true,
+      "sigmlCoverage": 0.48,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "في السوق القديم، كان كل صوت يدل على طريق. بائع النعناع ينادي، وصانع الخشب يطرق، والكتب الصغيرة تنتظر من يفتحها.",
+          "wordCount": 22
+        },
+        {
+          "pageNumber": 2,
+          "content": "توقفت مريم عند كتاب عن المدن. لم تسمع الكلمات، لكنها رأت المعنى في الصور والإشارات. قالت لأخيها: هذا الكتاب يتكلم معي.",
+          "wordCount": 24
+        }
+      ]
+    },
+    {
+      "id": "french-school",
+      "title": "Une Classe pour Tous",
+      "titleAr": null,
+      "author": "Texte original de démonstration",
+      "language": "fr",
+      "category": "Education",
+      "description": "Une scène scolaire courte sur l'accès à la lecture.",
+      "totalPages": 2,
+      "coverEmoji": "📚",
+      "accentColor": "#6E63B6",
+      "hasSigml": false,
+      "sigmlCoverage": 0.2,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "Dans la classe, le professeur posa trois livres sur la table. Un livre se lisait avec les yeux, un autre avec les oreilles, et le troisième avec les mains.",
+          "wordCount": 30
+        },
+        {
+          "pageNumber": 2,
+          "content": "Les élèves comprirent que la même histoire pouvait prendre plusieurs chemins. Personne ne restait à la porte de la lecture.",
+          "wordCount": 22
+        }
+      ]
+    },
+    {
+      "id": "darija-bridge",
+      "title": "The Bridge of Stories",
+      "titleAr": "قنطرة الحكايات",
+      "author": "Original demo story",
+      "language": "en",
+      "category": "Accessibility",
+      "description": "A short original text about technology connecting readers.",
+      "totalPages": 2,
+      "coverEmoji": "🌉",
+      "accentColor": "#2F8A54",
+      "hasSigml": true,
+      "sigmlCoverage": 0.36,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "A phone can become a bridge. For one reader, it speaks the page. For another, it shows the sentence as movement. The book remains the same, but the door becomes wider.",
+          "wordCount": 32
+        },
+        {
+          "pageNumber": 2,
+          "content": "At the library, Samia helped readers choose a story. Some listened, some watched, and some did both. Everyone left with a sentence they loved.",
+          "wordCount": 27
+        }
+      ]
+    }
+  ]
+}

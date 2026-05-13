@@ -1,0 +1,36 @@
+.git
+.gitignore
+.dockerignore
+
+# Python local state
+**/__pycache__/
+**/*.py[cod]
+backend/.venv/
+backend/.pytest_cache/
+
+# Flutter / Dart local state
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/coverage/
+
+# Android / Gradle local state
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+
+# IDE / local noise
+**/.idea/
+**/*.iml
+.vscode/
+*.log
+
+# Large generated/downloaded artifacts
+*.apk
+*.aab
+*.tar
+*.tar.gz
+*.zip

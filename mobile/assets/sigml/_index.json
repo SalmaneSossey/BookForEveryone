@@ -1,0 +1,11 @@
+{
+  "كتاب": "additions_lsm/kitab.sigml",
+  "قراءة": "additions_lsm/qiraa.sigml",
+  "أمل": "additions_lsm/amal.sigml",
+  "صوت": "additions_lsm/sawt.sigml",
+  "حركة": "additions_lsm/haraka.sigml",
+  "story": "additions_lsm/story.sigml",
+  "book": "additions_lsm/book.sigml",
+  "read": "additions_lsm/read.sigml",
+  "learn": "additions_lsm/learn.sigml"
+}

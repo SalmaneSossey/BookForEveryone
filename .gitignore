@@ -1,0 +1,30 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+coverage/
+
+# Android / Gradle
+.gradle/
+local.properties
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Environment
+.env
+*.log
+
+# Local data
+backend/chromadb_data/
+backend/.mypy_cache/
+
+# Editors
+.idea/
+.vscode/
