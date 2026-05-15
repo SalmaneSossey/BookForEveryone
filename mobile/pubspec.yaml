@@ -28,4 +28,6 @@ flutter:
   assets:
     - assets/data/sample_books.json
     - assets/sigml/_index.json
+    - assets/sigml/alsl/
+    - assets/sigml/additions_lsm/
     - assets/cwasa/signbook_avatar.html
