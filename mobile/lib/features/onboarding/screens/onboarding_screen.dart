@@ -79,7 +79,7 @@ class OnboardingScreen extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'Offline demo ready',
+                'Demo library ready',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),

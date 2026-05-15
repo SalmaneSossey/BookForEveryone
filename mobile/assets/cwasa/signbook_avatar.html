@@ -1,46 +1,512 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SignBook Avatar Placeholder</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KitabLilJamie CWASA Avatar</title>
+    <link
+      rel="stylesheet"
+      href="https://vhg.cmp.uea.ac.uk/tech/jas/vhg2023/cwa/cwasa.css"
+    />
+    <script src="https://vhg.cmp.uea.ac.uk/tech/jas/vhg2023/cwa/allcsa.js"></script>
     <style>
+      html,
+      body {
+        height: 100%;
+      }
+
       body {
         margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
+        overflow: hidden;
         background: #101820;
         color: #f7fbff;
-        font-family: system-ui, sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
-      .avatar {
-        width: min(68vw, 280px);
-        aspect-ratio: 1;
-        border-radius: 24px;
-        border: 3px solid #4ecdc4;
+
+      main {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background:
+          radial-gradient(circle at 50% 18%, rgba(21, 154, 140, 0.26), transparent 34%),
+          #101820;
+      }
+
+      .avatar-frame {
+        position: absolute;
+        inset: 0;
         display: grid;
         place-items: center;
-        box-shadow: 0 0 36px rgba(78, 205, 196, 0.34);
       }
-      .hands {
-        font-size: 72px;
-        animation: sign 1.1s ease-in-out infinite alternate;
+
+      .CWASAAvatar {
+        width: 100% !important;
+        height: 100% !important;
       }
-      @keyframes sign {
-        from { transform: translateY(10px) rotate(-4deg); }
-        to { transform: translateY(-10px) rotate(4deg); }
+
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .status-bar {
+        display: none;
+      }
+
+      .current-word {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .state-pill {
+        padding: 6px 9px;
+        border-radius: 8px;
+        border: 1px solid rgba(21, 154, 140, 0.72);
+        color: #f7fbff;
+        background: rgba(21, 154, 140, 0.24);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .fallback {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        text-align: center;
+        background: #101820;
+      }
+
+      .fallback.hidden {
+        display: none;
+      }
+
+      .fallback-mark {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+        border: 3px solid #159a8c;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 0;
+        animation: pulse 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes pulse {
+        from {
+          transform: translateY(10px) scale(0.94);
+        }
+        to {
+          transform: translateY(-10px) scale(1);
+        }
       }
     </style>
   </head>
   <body>
-    <main class="avatar" aria-label="Signing avatar placeholder">
-      <div class="hands">🤟</div>
+    <main>
+      <div class="avatar-frame">
+        <div class="CWASAAvatar av0"></div>
+      </div>
+      <div class="SToCA" aria-hidden="true"></div>
+      <section id="fallback" class="fallback">
+        <div>
+          <div class="fallback-mark">CWASA</div>
+          <strong id="fallbackWord">Loading signing avatar</strong>
+          <p id="fallbackStatus">Preparing CWASA WebGL runtime...</p>
+        </div>
+      </section>
+      <aside class="status-bar" aria-live="polite">
+        <div id="currentWord" class="current-word">Loading avatar</div>
+        <div id="statePill" class="state-pill">CWASA</div>
+      </aside>
     </main>
+
     <script>
-      window.playSigml = function playSigml(sigml) {
-        document.body.dataset.lastSigml = sigml || "";
+      const state = {
+        ready: false,
+        queuedGlosses: [],
+        selectedGlosses: [],
+        activeWord: "",
+        replayTimer: 0,
+        readyTimer: 0,
+        lastFrameSignIndex: -1,
       };
+
+      const fallback = document.getElementById("fallback");
+      const currentWord = document.getElementById("currentWord");
+      const fallbackWord = document.getElementById("fallbackWord");
+      const fallbackStatus = document.getElementById("fallbackStatus");
+      const statePill = document.getElementById("statePill");
+
+      function setStatus(word, status) {
+        const safeWord = word || "SignBook";
+        currentWord.textContent = safeWord;
+        fallbackWord.textContent = safeWord;
+        fallbackStatus.textContent = status;
+        statePill.textContent = status;
+      }
+
+      function escapeXml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      function notifyFlutter(message) {
+        if (window.SignBook && typeof window.SignBook.postMessage === "function") {
+          window.SignBook.postMessage(JSON.stringify(message));
+        }
+      }
+
+      function reportSigningItem(item) {
+        if (!item) {
+          return;
+        }
+        const word = item.word || item.gloss || "SignBook";
+        const gloss = item.gloss || word;
+        setStatus(word, item.available ? "Signing" : "Fallback");
+        notifyFlutter({ type: "sign", gloss, word });
+      }
+
+      function reportDiagnostic(status, detail) {
+        notifyFlutter({ type: "diagnostic", status, detail: String(detail || "") });
+      }
+
+      function selectedItemForGloss(gloss) {
+        const key = String(gloss || "").trim().toLowerCase();
+        return state.selectedGlosses.find((item) => {
+          return String(item.gloss || "").toLowerCase() === key ||
+            String(item.word || "").toLowerCase() === key;
+        });
+      }
+
+      function templateForGloss(item) {
+        const rawKey = `${item.sigmlPath || ""} ${item.gloss || ""} ${item.word || ""}`.toLowerCase();
+        if (rawKey.includes("mug")) {
+          return "mug";
+        }
+        if (rawKey.includes("take")) {
+          return "take";
+        }
+        if (String(item.gloss || "").toLowerCase() === "i" || rawKey.includes("cwasa_sample/i")) {
+          return "i";
+        }
+        if (rawKey.includes("book") || rawKey.includes("kitab")) {
+          return "book";
+        }
+        if (rawKey.includes("library")) {
+          return "library";
+        }
+        if (rawKey.includes("read") || rawKey.includes("qiraa")) {
+          return "read";
+        }
+        if (rawKey.includes("voice") || rawKey.includes("sawt")) {
+          return "sign";
+        }
+        if (rawKey.includes("sign") || rawKey.includes("gesture") || rawKey.includes("haraka")) {
+          return "sign";
+        }
+        if (rawKey.includes("hand")) {
+          return "hand";
+        }
+        if (rawKey.includes("word")) {
+          return "word";
+        }
+        return "general";
+      }
+
+      function signForGloss(item) {
+        const gloss = escapeXml(item.gloss || item.word || "sign");
+        const template = templateForGloss(item);
+        if (template === "mug" || template === "book" || template === "library") {
+          return `
+            <hns_sign gloss="${gloss}">
+              <hamnosys_nonmanual>
+                <hnm_mouthpicture picture="mVg"/>
+              </hamnosys_nonmanual>
+              <hamnosys_manual>
+                <hamfist/> <hamthumbacrossmod/>
+                <hamextfingerol/> <hampalml/>
+                <hamshoulders/>
+                <hamparbegin/> <hammoveu/> <hamarcu/>
+                <hamreplace/> <hamextfingerul/> <hampalmdl/>
+                <hamparend/>
+              </hamnosys_manual>
+            </hns_sign>`;
+        }
+        if (template === "take" || template === "read" || template === "word") {
+          return `
+            <hns_sign gloss="${gloss}">
+              <hamnosys_nonmanual>
+                <hnm_mouthpicture picture="te_Ik"/>
+              </hamnosys_nonmanual>
+              <hamnosys_manual>
+                <hamceeall/> <hamextfingerol/> <hampalml/>
+                <hamlrbeside/> <hamshoulders/> <hamarmextended/>
+                <hamreplace/> <hamextfingerl/> <hampalml/>
+                <hamchest/> <hamclose/>
+              </hamnosys_manual>
+            </hns_sign>`;
+        }
+        if (template === "i") {
+          return `
+            <hns_sign gloss="${gloss}">
+              <hamnosys_nonmanual>
+                <hnm_mouthpicture picture="a_I"/>
+              </hamnosys_nonmanual>
+              <hamnosys_manual>
+                <hamfinger2/> <hamthumbacrossmod/>
+                <hamextfingeril/> <hampalmr/>
+                <hamchest/> <hamtouch/>
+              </hamnosys_manual>
+            </hns_sign>`;
+        }
+        if (template === "hand" || template === "sign") {
+          return `
+            <hns_sign gloss="${gloss}">
+              <hamnosys_nonmanual>
+                <hnm_mouthpicture picture="te_Ik"/>
+              </hamnosys_nonmanual>
+              <hamnosys_manual>
+                <hamceeall/> <hamextfingerol/> <hampalml/>
+                <hamlrbeside/> <hamshoulders/> <hamarmextended/>
+                <hamreplace/> <hamextfingerl/> <hampalml/>
+                <hamchest/> <hamclose/>
+              </hamnosys_manual>
+            </hns_sign>`;
+        }
+        return `
+          <hns_sign gloss="${gloss}">
+            <hamnosys_nonmanual>
+              <hnm_mouthpicture picture="a_I"/>
+            </hamnosys_nonmanual>
+            <hamnosys_manual>
+              <hamfinger2/> <hamthumbacrossmod/>
+              <hamextfingeril/> <hampalmr/>
+              <hamchest/> <hamtouch/>
+            </hamnosys_manual>
+          </hns_sign>`;
+      }
+
+      function selectedGlossesFor(glosses) {
+        const usable = (glosses || []).filter((item) => item && item.available);
+        return (usable.length ? usable : (glosses || [])).slice(0, 8);
+      }
+
+      function isOfficialCwasaSample(glosses) {
+        const selected = selectedGlossesFor(glosses);
+        return selected.length > 0 && selected.every((item) => {
+          return ["mug", "take", "i"].includes(templateForGloss(item));
+        });
+      }
+
+      function isBlenderStorySample(glosses) {
+        const selected = selectedGlossesFor(glosses);
+        const hasBlenderStoryPath = selected.some((item) => {
+          return String(item.sigmlPath || "").includes("blenderStory");
+        });
+        const hasStoryAnchor = selected.some((item) => {
+          const key = String(item.gloss || item.word || "").toLowerCase();
+          return ["video", "soup", "orange", "blender", "explode", "explodes"].includes(key);
+        });
+        return hasBlenderStoryPath && hasStoryAnchor;
+      }
+
+      function blenderStorySelection() {
+        return [
+          "video",
+          "exciting",
+          "see",
+          "tell_story",
+          "in",
+          "film",
+          "woman",
+          "i",
+          "four",
+          "friend",
+          "invite",
+          "cook",
+          "soup",
+          "i",
+          "orange",
+          "blender",
+          "put",
+          "blender",
+          "explode",
+        ].map((gloss) => {
+          return {
+            word: gloss.replaceAll("_", " "),
+            gloss,
+            available: true,
+            sigmlPath: "cwasa_story/blenderStory.sigml",
+          };
+        });
+      }
+
+      function officialSampleSelection(glosses) {
+        const selected = selectedGlossesFor(glosses);
+        const byTemplate = {};
+        selected.forEach((item) => {
+          const template = templateForGloss(item);
+          byTemplate[template] = byTemplate[template] || item;
+        });
+        return ["mug", "take", "i"].map((template) => {
+          return byTemplate[template] || {
+            word: template === "i" ? "I" : template,
+            gloss: template,
+            available: true,
+            sigmlPath: `cwasa_sample/${template}.sigml`,
+          };
+        });
+      }
+
+      function sigmlForGlosses(glosses) {
+        state.selectedGlosses = selectedGlossesFor(glosses);
+        const signs = state.selectedGlosses.map(signForGloss).join("\n");
+        return `<?xml version="1.0" encoding="utf-8"?><sigml>${signs}</sigml>`;
+      }
+
+      function clearReplayTimer() {
+        if (state.replayTimer) {
+          window.clearTimeout(state.replayTimer);
+          state.replayTimer = 0;
+        }
+      }
+
+      function playQueuedGlosses() {
+        const glosses = state.queuedGlosses || [];
+        if (!glosses.length) {
+          setStatus("SignBook", "No glosses");
+          return;
+        }
+        clearReplayTimer();
+        const first = glosses.find((item) => item.available) || glosses[0];
+        setStatus(first.word || first.gloss, "Preparing");
+        state.lastFrameSignIndex = -1;
+        if (state.ready && window.CWASA) {
+          try {
+            if (typeof window.CWASA.stopSiGML === "function") {
+              window.CWASA.stopSiGML(0);
+            }
+            const result = isOfficialCwasaSample(glosses)
+              ? (state.selectedGlosses = officialSampleSelection(glosses),
+                  window.CWASA.playSiGMLURL("iTakeMug.sigml", 0))
+              : isBlenderStorySample(glosses)
+                ? (state.selectedGlosses = blenderStorySelection(),
+                    window.CWASA.playSiGMLURL("blenderStory.sigml", 0))
+              : window.CWASA.playSiGMLText(sigmlForGlosses(glosses), 0);
+            reportDiagnostic("play", result);
+            if (typeof result === "string" && result.includes("Undefined avatar")) {
+              fallback.classList.remove("hidden");
+              setStatus(first.word || first.gloss, "Avatar loading");
+            }
+          } catch (error) {
+            fallback.classList.remove("hidden");
+            setStatus(first.word || first.gloss, "Fallback");
+            reportDiagnostic("error", error && error.message ? error.message : error);
+          }
+        }
+      }
+
+      window.playGlossSequence = function playGlossSequence(glosses) {
+        clearReplayTimer();
+        state.queuedGlosses = Array.isArray(glosses) ? glosses : [];
+        playQueuedGlosses();
+      };
+
+      window.highlightGloss = function highlightGloss(word, available) {
+        state.activeWord = word || state.activeWord;
+        setStatus(state.activeWord, available ? "Signing" : "Fallback");
+      };
+
+      window.addEventListener("load", () => {
+        try {
+          window.CWASA.getLogger("Avatar", "info");
+          const markReady = () => {
+            if (state.ready) {
+              return;
+            }
+            state.ready = true;
+            fallback.classList.add("hidden");
+            setStatus(state.activeWord || "Avatar ready", "CWASA");
+            playQueuedGlosses();
+          };
+          const markReadySoon = () => {
+            if (state.readyTimer) {
+              window.clearTimeout(state.readyTimer);
+            }
+            state.readyTimer = window.setTimeout(() => {
+              state.readyTimer = 0;
+              markReady();
+            }, 900);
+          };
+
+          window.CWASA.addHook("avatarloaded", (event) => {
+            if (!event || event.msg !== null) {
+              markReadySoon();
+            }
+          }, 0);
+          window.CWASA.addHook("avatarframe", (event) => {
+            const signIndex = event && event.msg ? Number(event.msg.s) : NaN;
+            if (!Number.isNaN(signIndex) && signIndex !== state.lastFrameSignIndex) {
+              state.lastFrameSignIndex = signIndex;
+              reportSigningItem(state.selectedGlosses[signIndex]);
+            }
+          }, 0);
+          window.CWASA.addHook("avatarsign", (event) => {
+            if (event && event.msg && event.msg.g) {
+              reportSigningItem(selectedItemForGloss(event.msg.g) || { word: event.msg.g, gloss: event.msg.g, available: true });
+            } else if (event && event.msg) {
+              setStatus(String(event.msg), "Signing");
+            }
+          }, 0);
+          window.CWASA.addHook("status", (event) => {
+            if (!event || !event.msg) {
+              return;
+            }
+            const message = String(event.msg);
+            reportDiagnostic("status", message);
+            if (message.toLowerCase().includes("error")) {
+              fallback.classList.remove("hidden");
+              setStatus(state.activeWord || "SignBook", "Fallback");
+            }
+          });
+          const ready = window.CWASA.init({
+            useClientConfig: true,
+            ambIdle: true,
+            avSettings: {
+              initAv: "luna",
+              initCamera: [0.0, 0.53, 2.06, -12.5, 18.0, 30.0, -1.0, -1.0],
+              initSpeed: -1,
+              rateSpeed: 5,
+              background: "#101820",
+            },
+          });
+          if (ready && typeof ready.then === "function") {
+            ready.then(() => {
+              reportDiagnostic("ready", "CWASA configuration loaded");
+            }).catch(() => {
+              fallback.classList.remove("hidden");
+              setStatus("SignBook", "Fallback");
+            });
+          }
+          setStatus("Loading avatar", "CWASA");
+        } catch (error) {
+          fallback.classList.remove("hidden");
+          setStatus("SignBook", "Fallback");
+        }
+      });
     </script>
   </body>
 </html>

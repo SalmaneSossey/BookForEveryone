@@ -20,6 +20,16 @@ flutter build apk --debug
 
 The generated debug APK is written to `build/app/outputs/flutter-apk/app-debug.apk`.
 
+By default the app reads bundled JSON so the demo works offline. To try the
+FastAPI backend instead, run with:
+
+```bash
+flutter run --dart-define=USE_BACKEND=true --dart-define=API_BASE_URL=http://10.0.2.2:8000
+```
+
+For a physical Android phone, replace `10.0.2.2` with the development
+machine's LAN IP address.
+
 To run on a real Android device from WSL, connect USB debugging through Windows/WSL ADB and confirm the device appears in `flutter devices`, then run `flutter run -d <device-id>`.
 
 ## MVP Routes

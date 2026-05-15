@@ -11,6 +11,7 @@ class TtsService {
 
   Future<void> speak(String text, String languageCode) async {
     await _tts.stop();
+    await _tts.awaitSpeakCompletion(true);
     await _tts.setLanguage(_ttsLanguage(languageCode));
     await _tts.speak(text);
   }

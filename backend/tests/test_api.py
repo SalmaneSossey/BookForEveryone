@@ -39,9 +39,27 @@ def test_book_content_returns_page() -> None:
 
 
 def test_signbook_glosses() -> None:
-    response = client.post("/api/signbook/text-to-glosses", json={"text": "كتاب صوت"})
+    response = client.post(
+        "/api/signbook/text-to-glosses",
+        json={"text": "كتابا وقراءة وصوتا وحركة"},
+    )
 
     assert response.status_code == 200
     glosses = response.json()["glosses"]
     assert glosses[0]["available"] is True
     assert glosses[0]["sigmlPath"] == "additions_lsm/kitab.sigml"
+    assert sum(gloss["available"] for gloss in glosses) == 4
+
+
+def test_signbook_blender_story_glosses() -> None:
+    response = client.post(
+        "/api/signbook/text-to-glosses",
+        json={"text": "see woman friends cook soup orange blender explodes"},
+    )
+
+    assert response.status_code == 200
+    glosses = response.json()["glosses"]
+    assert all(gloss["available"] for gloss in glosses)
+    assert {gloss["sigmlPath"] for gloss in glosses} == {
+        "cwasa_story/blenderStory.sigml"
+    }

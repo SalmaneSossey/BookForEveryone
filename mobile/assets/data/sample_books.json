@@ -1,6 +1,48 @@
 {
   "books": [
     {
+      "id": "signbook-cwasa-blender-story",
+      "title": "CWASA Blender Story",
+      "titleAr": "قصة الخلاط",
+      "author": "Controlled CWASA demo text",
+      "language": "en",
+      "category": "SignBook demo",
+      "description": "A richer controlled demo using CWASA's official Blender Story motion sequence.",
+      "totalPages": 1,
+      "coverEmoji": "🎬",
+      "accentColor": "#159A8C",
+      "hasSigml": true,
+      "sigmlCoverage": 1.0,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "I see a woman. Four friends cook soup. I put orange in a blender. The blender explodes.",
+          "wordCount": 17
+        }
+      ]
+    },
+    {
+      "id": "signbook-cwasa-official-demo",
+      "title": "CWASA Official Motion",
+      "titleAr": "عرض حركة كواسا",
+      "author": "Controlled demo text",
+      "language": "en",
+      "category": "SignBook demo",
+      "description": "A controlled demo that plays CWASA's official iTakeMug sample motion.",
+      "totalPages": 1,
+      "coverEmoji": "🤟",
+      "accentColor": "#159A8C",
+      "hasSigml": true,
+      "sigmlCoverage": 1.0,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "Mug take I.",
+          "wordCount": 3
+        }
+      ]
+    },
+    {
       "id": "moroccan-fable-lantern",
       "title": "The Lantern of the Old Medina",
       "titleAr": "قنديل المدينة القديمة",
@@ -153,6 +195,110 @@
           "pageNumber": 2,
           "content": "At the library, Samia helped readers choose a story. Some listened, some watched, and some did both. Everyone left with a sentence they loved.",
           "wordCount": 27
+        }
+      ]
+    },
+    {
+      "id": "atlas-library",
+      "title": "Library of the Atlas",
+      "titleAr": "مكتبة الأطلس",
+      "author": "Original Moroccan demo text",
+      "language": "ar",
+      "category": "Moroccan story",
+      "description": "حكاية قصيرة عن مكتبة متنقلة تصل إلى قرية في الأطلس.",
+      "totalPages": 2,
+      "coverEmoji": "⛰️",
+      "accentColor": "#3B7EA1",
+      "hasSigml": true,
+      "sigmlCoverage": 0.58,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "وصلت المكتبة الصغيرة إلى قرية بين الجبال. حملت سلمى كتابا جديدا، وطلبت من سامية أن تقرأ بصوت واضح أمام الأطفال.",
+          "wordCount": 23
+        },
+        {
+          "pageNumber": 2,
+          "content": "كان أمين لا يسمع الكلمات، لكنه تابع حركة اليدين والوجوه. فهم أن القراءة يمكن أن تسافر بالصوت، وبالصورة، وبالإشارة.",
+          "wordCount": 22
+        }
+      ]
+    },
+    {
+      "id": "letters-for-amal",
+      "title": "Letters for Amal",
+      "titleAr": "رسائل إلى أمل",
+      "author": "Original Arabic demo text",
+      "language": "ar",
+      "category": "Accessibility",
+      "description": "نص عربي قصير يركز على الأمل والقراءة المشتركة.",
+      "totalPages": 2,
+      "coverEmoji": "✉️",
+      "accentColor": "#6E63B6",
+      "hasSigml": true,
+      "sigmlCoverage": 0.62,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "كتبت المعلمة على السبورة: القراءة حق وليست هدية. رفعت أمل يدها وقالت إن الكتاب الجيد يفتح بابا لكل طفل.",
+          "wordCount": 22
+        },
+        {
+          "pageNumber": 2,
+          "content": "في آخر الدرس، قرأ التلاميذ الرسالة معا. بعضهم سمع الصوت، وبعضهم رأى الإشارة، وكلهم وجدوا معنى واحدا.",
+          "wordCount": 21
+        }
+      ]
+    },
+    {
+      "id": "darija-morning",
+      "title": "Morning in the Neighborhood",
+      "titleAr": "صباح فالحي",
+      "author": "Original Darija-friendly demo text",
+      "language": "ar",
+      "category": "Darija",
+      "description": "مشهد بسيط يمزج العربية القريبة من الدارجة مع فكرة القراءة للجميع.",
+      "totalPages": 2,
+      "coverEmoji": "☕",
+      "accentColor": "#D9902F",
+      "hasSigml": true,
+      "sigmlCoverage": 0.5,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "في الصباح قال ياسين لصديقه: قرا ليا هاد الصفحة. ابتسمت سامية وبدأت تقرأ كتاب الحي بصوت هادئ.",
+          "wordCount": 22
+        },
+        {
+          "pageNumber": 2,
+          "content": "بعد قليل قالت ندى: حبس شوية، بغيت نشوف الإشارة. تحولت الكلمات إلى حركة، وبقي المعنى قريبا من الجميع.",
+          "wordCount": 21
+        }
+      ]
+    },
+    {
+      "id": "rabat-garden",
+      "title": "Le Jardin de Rabat",
+      "titleAr": null,
+      "author": "Texte original de démonstration",
+      "language": "fr",
+      "category": "Moroccan story",
+      "description": "Une courte scène à Rabat pour montrer la lecture inclusive.",
+      "totalPages": 2,
+      "coverEmoji": "🌳",
+      "accentColor": "#2F8A54",
+      "hasSigml": false,
+      "sigmlCoverage": 0.22,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "Dans un jardin de Rabat, Lina posa son téléphone près du banc. L'application lut la page pendant que son ami suivait les mots avec les yeux.",
+          "wordCount": 28
+        },
+        {
+          "pageNumber": 2,
+          "content": "La même histoire changeait de forme sans perdre son cœur. Pour Lina, c'était une voix; pour son ami, c'était un geste clair.",
+          "wordCount": 25
         }
       ]
     }

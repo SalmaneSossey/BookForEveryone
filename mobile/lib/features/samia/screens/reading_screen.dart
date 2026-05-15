@@ -24,8 +24,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
 
   Book? _book;
   int _pageNumber = 1;
+  int _readToken = 0;
   bool _speaking = false;
   bool _loading = true;
+  String _readerStatus = 'Ready to read';
 
   BookPage get _currentPage => _book!.pageAt(_pageNumber);
 
@@ -65,19 +67,39 @@ class _ReadingScreenState extends State<ReadingScreen> {
     if (_book == null) {
       return;
     }
+    final token = ++_readToken;
+    final pageNumber = _pageNumber;
     await _saveProgress();
-    setState(() => _speaking = true);
+    setState(() {
+      _speaking = true;
+      _readerStatus = 'Samia is reading page $pageNumber';
+    });
     await _ttsService.speak(_currentPage.content, _book!.language);
+    if (!mounted || token != _readToken) {
+      return;
+    }
+    setState(() {
+      _speaking = false;
+      _readerStatus = 'Finished page $pageNumber';
+    });
   }
 
   Future<void> _pause() async {
+    _readToken += 1;
     await _ttsService.pause();
-    setState(() => _speaking = false);
+    setState(() {
+      _speaking = false;
+      _readerStatus = 'Paused page $_pageNumber';
+    });
   }
 
   Future<void> _stop() async {
+    _readToken += 1;
     await _ttsService.stop();
-    setState(() => _speaking = false);
+    setState(() {
+      _speaking = false;
+      _readerStatus = 'Stopped';
+    });
   }
 
   Future<void> _nextPage() async {
@@ -127,18 +149,57 @@ class _ReadingScreenState extends State<ReadingScreen> {
             ),
             const SizedBox(height: 8),
             Text('Page $_pageNumber of ${book.totalPages}'),
+            const SizedBox(height: 12),
+            Semantics(
+              liveRegion: true,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: _speaking
+                      ? AppColors.teal.withValues(alpha: 0.12)
+                      : AppColors.ink.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _speaking
+                        ? AppColors.teal
+                        : AppColors.ink.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _speaking ? Icons.volume_up : Icons.info_outline,
+                      color: _speaking ? AppColors.teal : AppColors.ink,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _readerStatus,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.ink.withValues(alpha: 0.12)),
+                border:
+                    Border.all(color: AppColors.ink.withValues(alpha: 0.12)),
               ),
               child: Text(
                 page.content,
                 textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 22),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(fontSize: 22),
               ),
             ),
             const SizedBox(height: 18),

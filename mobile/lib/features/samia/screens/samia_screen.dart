@@ -43,17 +43,24 @@ class _SamiaScreenState extends State<SamiaScreen> {
     }
 
     final lower = command.toLowerCase();
+    final query = _commandQuery(command);
+    final queryLower = query.toLowerCase();
 
     final matchedBook = books.cast<Book?>().firstWhere(
-          (book) {
-            if (book == null) {
-              return false;
-            }
-            return lower.contains(book.title.toLowerCase()) ||
-                (book.titleAr != null && command.contains(book.titleAr!));
-          },
-          orElse: () => null,
-        );
+      (book) {
+        if (book == null) {
+          return false;
+        }
+        return lower.contains(book.title.toLowerCase()) ||
+            queryLower.contains(book.title.toLowerCase()) ||
+            book.title.toLowerCase().contains(queryLower) ||
+            (book.titleAr != null &&
+                (command.contains(book.titleAr!) ||
+                    query.contains(book.titleAr!) ||
+                    book.titleAr!.contains(query)));
+      },
+      orElse: () => null,
+    );
 
     if (matchedBook != null) {
       if (mounted) {
@@ -62,7 +69,8 @@ class _SamiaScreenState extends State<SamiaScreen> {
       return;
     }
 
-    final isReadCommand = VoiceCommands.read.any((token) => lower.contains(token));
+    final isReadCommand =
+        VoiceCommands.read.any((token) => lower.contains(token));
     if (isReadCommand && books.isNotEmpty) {
       if (mounted) {
         context.go('/reading/${books.first.id}');
@@ -70,7 +78,7 @@ class _SamiaScreenState extends State<SamiaScreen> {
       return;
     }
 
-    final results = await _repository.search(command);
+    final results = await _repository.search(query.isEmpty ? command : query);
     if (!mounted) {
       return;
     }
@@ -81,6 +89,24 @@ class _SamiaScreenState extends State<SamiaScreen> {
           : 'Found ${results.length} matching book${results.length == 1 ? '' : 's'}';
       _booksFuture = Future.value(results.isEmpty ? books : results);
     });
+  }
+
+  String _commandQuery(String command) {
+    var query = command.trim();
+    final lower = query.toLowerCase();
+    final tokens = [...VoiceCommands.read, ...VoiceCommands.search]
+      ..sort((a, b) => b.length.compareTo(a.length));
+    for (final token in tokens) {
+      final tokenLower = token.toLowerCase();
+      if (lower == tokenLower) {
+        return '';
+      }
+      if (lower.startsWith('$tokenLower ')) {
+        query = query.substring(token.length).trim();
+        break;
+      }
+    }
+    return query;
   }
 
   @override
@@ -142,6 +168,15 @@ class _SamiaScreenState extends State<SamiaScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                _CommandExamples(
+                  onSelected: (command) {
+                    _commandController.text = command;
+                    _commandController.selection = TextSelection.collapsed(
+                      offset: command.length,
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
                 AccessibleButton(
                   label: 'Search / read',
                   icon: Icons.search,
@@ -168,6 +203,38 @@ class _SamiaScreenState extends State<SamiaScreen> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _CommandExamples extends StatelessWidget {
+  const _CommandExamples({required this.onSelected});
+
+  final ValueChanged<String> onSelected;
+
+  static const _examples = [
+    'read garden of words',
+    'قرا ليا',
+    'قلب على السوق',
+    'read le jardin de rabat',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final example in _examples)
+          ActionChip(
+            avatar: const Icon(Icons.bolt, size: 18),
+            label: Text(example),
+            onPressed: () => onSelected(example),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+      ],
     );
   }
 }
