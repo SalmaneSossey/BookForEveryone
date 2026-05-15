@@ -29,5 +29,5 @@ flutter:
   assets:
     - assets/data/sample_books.json
     - assets/sigml/_index.json
-    - assets/sigml/alsl/
+    - assets/sigml/regional_signs/
     - assets/cwasa/signbook_avatar.html
