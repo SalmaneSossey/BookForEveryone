@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,8 +14,22 @@ import 'features/signbook/screens/signbook_reader_screen.dart';
 class KitabLilJamieApp extends StatelessWidget {
   const KitabLilJamieApp({super.key});
 
+  static String get _initialLocation {
+    final androidRoute = PlatformDispatcher.instance.defaultRouteName;
+    if (androidRoute.isNotEmpty && androidRoute != '/') {
+      return androidRoute;
+    }
+
+    const buildRoute = String.fromEnvironment('INITIAL_ROUTE');
+    if (buildRoute.isNotEmpty && buildRoute != '/') {
+      return buildRoute;
+    }
+
+    return '/';
+  }
+
   static final GoRouter _router = GoRouter(
-    initialLocation: '/',
+    initialLocation: _initialLocation,
     routes: [
       GoRoute(
         path: '/',
