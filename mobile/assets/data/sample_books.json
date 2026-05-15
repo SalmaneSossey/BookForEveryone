@@ -2,12 +2,12 @@
   "books": [
     {
       "id": "signbook-alsl-local-demo",
-      "title": "ALSL Local Signs",
-      "titleAr": "إشارات محلية جزائرية",
-      "author": "Local ALSL SiGML demo",
+      "title": "Regional Sign Gestures",
+      "titleAr": "إشارات مغاربية",
+      "author": "Regional SiGML demo",
       "language": "ar",
       "category": "SignBook demo",
-      "description": "A short Arabic demo using local Algerian Sign Language SiGML files bundled in the app.",
+      "description": "A short Arabic demo using local regional Sign Language SiGML files bundled in the app.",
       "totalPages": 1,
       "coverEmoji": "🤟",
       "accentColor": "#159A8C",
