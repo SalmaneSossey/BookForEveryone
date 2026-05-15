@@ -1,6 +1,27 @@
 {
   "books": [
     {
+      "id": "signbook-alsl-local-demo",
+      "title": "ALSL Local Signs",
+      "titleAr": "إشارات محلية جزائرية",
+      "author": "Local ALSL SiGML demo",
+      "language": "ar",
+      "category": "SignBook demo",
+      "description": "A short Arabic demo using local Algerian Sign Language SiGML files bundled in the app.",
+      "totalPages": 1,
+      "coverEmoji": "🤟",
+      "accentColor": "#159A8C",
+      "hasSigml": true,
+      "sigmlCoverage": 1.0,
+      "pages": [
+        {
+          "pageNumber": 1,
+          "content": "مرحبا. يقرأ كتاب. كلمة صوت يد. شكرا.",
+          "wordCount": 7
+        }
+      ]
+    },
+    {
       "id": "signbook-cwasa-blender-story",
       "title": "CWASA Blender Story",
       "titleAr": "قصة الخلاط",

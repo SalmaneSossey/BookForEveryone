@@ -4,12 +4,14 @@ class GlossEntry {
     required this.gloss,
     required this.available,
     this.sigmlPath,
+    this.sigmlText,
   });
 
   final String word;
   final String gloss;
   final bool available;
   final String? sigmlPath;
+  final String? sigmlText;
 
   factory GlossEntry.fromJson(Map<String, dynamic> json) {
     return GlossEntry(
@@ -17,6 +19,7 @@ class GlossEntry {
       gloss: json['gloss'] as String? ?? '',
       available: json['available'] as bool? ?? false,
       sigmlPath: json['sigmlPath'] as String?,
+      sigmlText: json['sigmlText'] as String?,
     );
   }
 
@@ -26,6 +29,7 @@ class GlossEntry {
       'gloss': gloss,
       'available': available,
       'sigmlPath': sigmlPath,
+      'sigmlText': sigmlText,
     };
   }
 }

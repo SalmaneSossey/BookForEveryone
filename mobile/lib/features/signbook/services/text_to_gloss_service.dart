@@ -1,64 +1,15 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+
 import '../../../core/models/gloss_entry.dart';
 
 class TextToGlossService {
   const TextToGlossService();
 
-  static const Map<String, String> _sigmlIndex = {
-    'كتاب': 'additions_lsm/kitab.sigml',
-    'الكتاب': 'additions_lsm/kitab.sigml',
-    'مكتبه': 'additions_lsm/library.sigml',
-    'المكتبه': 'additions_lsm/library.sigml',
-    'قراءة': 'additions_lsm/qiraa.sigml',
-    'قراءه': 'additions_lsm/qiraa.sigml',
-    'قرا': 'additions_lsm/qiraa.sigml',
-    'اقرا': 'additions_lsm/qiraa.sigml',
-    'تقرأ': 'additions_lsm/qiraa.sigml',
-    'تقرا': 'additions_lsm/qiraa.sigml',
-    'قرأ': 'additions_lsm/qiraa.sigml',
-    'أمل': 'additions_lsm/amal.sigml',
-    'امل': 'additions_lsm/amal.sigml',
-    'صوت': 'additions_lsm/sawt.sigml',
-    'حركة': 'additions_lsm/haraka.sigml',
-    'حركه': 'additions_lsm/haraka.sigml',
-    'اشاره': 'additions_lsm/sign.sigml',
-    'الاشاره': 'additions_lsm/sign.sigml',
-    'اشارات': 'additions_lsm/sign.sigml',
-    'الإشارات': 'additions_lsm/sign.sigml',
-    'كلمه': 'additions_lsm/word.sigml',
-    'كلمة': 'additions_lsm/word.sigml',
-    'كلمات': 'additions_lsm/word.sigml',
-    'الكلمات': 'additions_lsm/word.sigml',
-    'لغه': 'additions_lsm/language.sigml',
-    'لغة': 'additions_lsm/language.sigml',
-    'اللغه': 'additions_lsm/language.sigml',
-    'الجميع': 'additions_lsm/everyone.sigml',
-    'كل': 'additions_lsm/everyone.sigml',
-    'يد': 'additions_lsm/hand.sigml',
-    'يديها': 'additions_lsm/hand.sigml',
-    'اليدين': 'additions_lsm/hand.sigml',
-    'صوره': 'additions_lsm/image.sigml',
-    'صورة': 'additions_lsm/image.sigml',
-    'صور': 'additions_lsm/image.sigml',
-    'المعنى': 'additions_lsm/meaning.sigml',
-    'معنى': 'additions_lsm/meaning.sigml',
-    'اطفال': 'additions_lsm/children.sigml',
-    'الأطفال': 'additions_lsm/children.sigml',
-    'الاطفال': 'additions_lsm/children.sigml',
-    'ساميه': 'additions_lsm/samia.sigml',
-    'سامية': 'additions_lsm/samia.sigml',
-    'صباح': 'additions_lsm/morning.sigml',
-    'story': 'additions_lsm/story.sigml',
-    'book': 'additions_lsm/book.sigml',
-    'library': 'additions_lsm/library.sigml',
-    'read': 'additions_lsm/read.sigml',
-    'reading': 'additions_lsm/read.sigml',
-    'learn': 'additions_lsm/learn.sigml',
-    'voice': 'additions_lsm/voice.sigml',
-    'word': 'additions_lsm/word.sigml',
-    'words': 'additions_lsm/word.sigml',
-    'sign': 'additions_lsm/sign.sigml',
-    'gesture': 'additions_lsm/sign.sigml',
-    'hands': 'additions_lsm/hand.sigml',
+  static Future<Map<String, String>>? _indexFuture;
+
+  static const Map<String, String> _remoteDemoIndex = {
     'i': 'cwasa_sample/i.sigml',
     'take': 'cwasa_sample/take.sigml',
     'mug': 'cwasa_sample/mug.sigml',
@@ -78,46 +29,140 @@ class TextToGlossService {
     'explodes': 'cwasa_story/blenderStory.sigml',
   };
 
-  List<GlossEntry> convert(String text) {
+  Future<List<GlossEntry>> convert(String text) async {
+    final index = await _loadIndex();
     final words = text
         .split(RegExp(r'\s+'))
         .map(_clean)
         .where((word) => word.isNotEmpty)
-        .take(18);
+        .toList(growable: false);
 
-    return words.map((word) {
-      final key = _normalizeArabic(word.toLowerCase());
-      final sigmlPath = _resolveSigmlPath(key);
+    final glosses = <GlossEntry>[];
+    var wordIndex = 0;
+    while (wordIndex < words.length && glosses.length < 18) {
+      final match = await _resolveBestMatch(words, wordIndex, index);
+      glosses.add(match.entry);
+      wordIndex += match.consumedWords;
+    }
+
+    return glosses;
+  }
+
+  Future<_GlossMatch> _resolveBestMatch(
+    List<String> words,
+    int start,
+    Map<String, String> index,
+  ) async {
+    final remainingWords = words.length - start;
+    final maxSpan = remainingWords < 4 ? remainingWords : 4;
+    for (var span = maxSpan; span >= 1; span--) {
+      final phrase = words.skip(start).take(span).join(' ');
+      final entry = await _resolveEntry(phrase, index);
+      if (entry.available) {
+        return _GlossMatch(entry, span);
+      }
+    }
+
+    return _GlossMatch(await _resolveEntry(words[start], index), 1);
+  }
+
+  Future<GlossEntry> _resolveEntry(
+    String word,
+    Map<String, String> index,
+  ) async {
+    final key = _normalizeArabic(word.toLowerCase());
+
+    for (final candidate in _candidates(key)) {
+      final remotePath = _remoteDemoIndex[candidate];
+      if (remotePath != null) {
+        return GlossEntry(
+          word: word,
+          gloss: candidate,
+          available: true,
+          sigmlPath: remotePath,
+        );
+      }
+
+      final sigmlPath = index[candidate];
+      if (sigmlPath == null) {
+        continue;
+      }
+
+      final sigmlText = await _loadSigmlText(sigmlPath, candidate);
+      if (sigmlText == null) {
+        continue;
+      }
+
       return GlossEntry(
         word: word,
-        gloss: key,
-        available: sigmlPath != null,
+        gloss: candidate,
+        available: true,
         sigmlPath: sigmlPath,
+        sigmlText: sigmlText,
       );
-    }).toList(growable: false);
+    }
+
+    return GlossEntry(word: word, gloss: key, available: false);
+  }
+
+  static Future<Map<String, String>> _loadIndex() {
+    return _indexFuture ??= _readIndex();
+  }
+
+  static Future<Map<String, String>> _readIndex() async {
+    final raw = await rootBundle.loadString('assets/sigml/_index.json');
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final index = <String, String>{};
+
+    for (final entry in decoded.entries) {
+      final path = entry.value as String? ?? '';
+      if (path.isEmpty) {
+        continue;
+      }
+
+      final key = _normalizeArabicStatic(entry.key.toLowerCase().trim());
+      index[key] = path;
+    }
+
+    return index;
+  }
+
+  Future<String?> _loadSigmlText(String path, String gloss) async {
+    try {
+      final raw = await rootBundle.loadString('assets/sigml/$path');
+      return _patchEmptyGloss(raw, gloss);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _patchEmptyGloss(String sigml, String gloss) {
+    final escapedGloss = _escapeXmlAttribute(gloss);
+    return sigml.replaceFirst(
+        RegExp(r'gloss\s*=\s*""'), 'gloss="$escapedGloss"');
+  }
+
+  String _escapeXmlAttribute(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
   }
 
   String _clean(String word) {
     return word.replaceAll(RegExp(r'[^\w\u0600-\u06FF]+'), '');
   }
 
-  String _normalizeArabic(String value) {
+  String _normalizeArabic(String value) => _normalizeArabicStatic(value);
+
+  static String _normalizeArabicStatic(String value) {
     return value
         .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
         .replaceAll('أ', 'ا')
         .replaceAll('إ', 'ا')
         .replaceAll('آ', 'ا')
         .replaceAll('ة', 'ه');
-  }
-
-  String? _resolveSigmlPath(String key) {
-    for (final candidate in _candidates(key)) {
-      final match = _sigmlIndex[candidate];
-      if (match != null) {
-        return match;
-      }
-    }
-    return null;
   }
 
   Iterable<String> _candidates(String key) sync* {
@@ -155,4 +200,11 @@ class TextToGlossService {
       }
     }
   }
+}
+
+class _GlossMatch {
+  const _GlossMatch(this.entry, this.consumedWords);
+
+  final GlossEntry entry;
+  final int consumedWords;
 }

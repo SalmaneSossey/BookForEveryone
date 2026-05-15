@@ -27,6 +27,7 @@ class _SignBookReaderScreenState extends State<SignBookReaderScreen> {
   final TextToGlossService _glossService = const TextToGlossService();
 
   Book? _book;
+  List<GlossEntry> _glosses = const [];
   int _pageNumber = 1;
   int _activeGlossIndex = 0;
   int _replayNonce = 0;
@@ -44,12 +45,13 @@ class _SignBookReaderScreenState extends State<SignBookReaderScreen> {
     final pageNumber = progress?.pageNumber ?? 1;
     final glosses = book == null
         ? const <GlossEntry>[]
-        : _glossService.convert(book.pageAt(pageNumber).content);
+        : await _glossService.convert(book.pageAt(pageNumber).content);
     if (!mounted) {
       return;
     }
     setState(() {
       _book = book;
+      _glosses = glosses;
       _pageNumber = pageNumber;
       _activeGlossIndex = _firstActiveGlossIndex(glosses);
       _loading = false;
@@ -91,11 +93,7 @@ class _SignBookReaderScreenState extends State<SignBookReaderScreen> {
   }
 
   List<GlossEntry> _currentGlosses() {
-    final book = _book;
-    if (book == null) {
-      return const [];
-    }
-    return _glossService.convert(book.pageAt(_pageNumber).content);
+    return _glosses;
   }
 
   void _replaySigns() {
@@ -128,9 +126,13 @@ class _SignBookReaderScreenState extends State<SignBookReaderScreen> {
       return;
     }
     final nextPage = _pageNumber + 1;
-    final glosses = _glossService.convert(book.pageAt(nextPage).content);
+    final glosses = await _glossService.convert(book.pageAt(nextPage).content);
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _pageNumber = nextPage;
+      _glosses = glosses;
       _activeGlossIndex = _firstActiveGlossIndex(glosses);
     });
     await _saveAndSignal();
@@ -142,9 +144,14 @@ class _SignBookReaderScreenState extends State<SignBookReaderScreen> {
       return;
     }
     final previousPage = _pageNumber - 1;
-    final glosses = _glossService.convert(book.pageAt(previousPage).content);
+    final glosses =
+        await _glossService.convert(book.pageAt(previousPage).content);
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _pageNumber = previousPage;
+      _glosses = glosses;
       _activeGlossIndex = _firstActiveGlossIndex(glosses);
     });
     await _saveAndSignal();
@@ -162,7 +169,7 @@ class _SignBookReaderScreenState extends State<SignBookReaderScreen> {
     }
 
     final page = book.pageAt(_pageNumber);
-    final glosses = _glossService.convert(page.content);
+    final glosses = _glosses;
     final activeGlossIndex =
         glosses.isEmpty ? -1 : _activeGlossIndex.clamp(0, glosses.length - 1);
     final activeGloss =

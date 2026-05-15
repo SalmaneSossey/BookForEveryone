@@ -34,18 +34,29 @@ void main() {
     expect(book.pageAt(1).content, contains('للجميع'));
   });
 
-  test('TextToGlossService flags available SiGML words', () {
+  test('TextToGlossService loads bundled ALSL SiGML words', () async {
     const service = TextToGlossService();
-    final glosses = service.convert('كتابا وقراءة وصوتا وحركة');
+    final glosses = await service.convert('مرحبا يقرأ كتاب كلمة صوت يد شكرا');
 
-    expect(glosses.where((entry) => entry.available), isNotEmpty);
-    expect(glosses.first.sigmlPath, 'additions_lsm/kitab.sigml');
-    expect(glosses.where((entry) => entry.available), hasLength(4));
+    expect(glosses.every((entry) => entry.available), isTrue);
+    expect(glosses.map((entry) => entry.sigmlPath), [
+      'alsl/مرحبا.sigml',
+      'alsl/يقرأ.sigml',
+      'alsl/كتاب.sigml',
+      'alsl/كلمة.sigml',
+      'alsl/صوت.sigml',
+      'alsl/يد.sigml',
+      'alsl/شكرا.sigml',
+    ]);
+    expect(
+        glosses
+            .every((entry) => entry.sigmlText?.contains('<hns_sign') ?? false),
+        isTrue);
   });
 
-  test('TextToGlossService maps CWASA sample motion words', () {
+  test('TextToGlossService maps CWASA sample motion words', () async {
     const service = TextToGlossService();
-    final glosses = service.convert('I take mug');
+    final glosses = await service.convert('I take mug');
 
     expect(glosses.map((entry) => entry.sigmlPath), [
       'cwasa_sample/i.sigml',
@@ -55,9 +66,9 @@ void main() {
     expect(glosses.every((entry) => entry.available), isTrue);
   });
 
-  test('TextToGlossService maps CWASA Blender Story demo words', () {
+  test('TextToGlossService maps CWASA Blender Story demo words', () async {
     const service = TextToGlossService();
-    final glosses = service.convert(
+    final glosses = await service.convert(
       'I see woman four friends cook soup orange blender explodes',
     );
 

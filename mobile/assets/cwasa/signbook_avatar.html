@@ -373,8 +373,30 @@
 
       function sigmlForGlosses(glosses) {
         state.selectedGlosses = selectedGlossesFor(glosses);
-        const signs = state.selectedGlosses.map(signForGloss).join("\n");
+        const signs = state.selectedGlosses.map((item) => {
+          return signsFromSigmlText(item) || signForGloss(item);
+        }).join("\n");
         return `<?xml version="1.0" encoding="utf-8"?><sigml>${signs}</sigml>`;
+      }
+
+      function signsFromSigmlText(item) {
+        const sigmlText = String(item.sigmlText || "");
+        if (!sigmlText.trim()) {
+          return "";
+        }
+
+        const matches = sigmlText.match(/<(?:hns_sign|hamgestural_sign)\b[\s\S]*?<\/(?:hns_sign|hamgestural_sign)>/g);
+        if (!matches || !matches.length) {
+          return "";
+        }
+
+        const gloss = escapeXml(item.gloss || item.word || "sign");
+        return matches.map((sign) => {
+          if (/gloss\s*=\s*""/.test(sign)) {
+            return sign.replace(/gloss\s*=\s*""/, `gloss="${gloss}"`);
+          }
+          return sign;
+        }).join("\n");
       }
 
       function clearReplayTimer() {
