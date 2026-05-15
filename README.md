@@ -19,7 +19,7 @@ The first slice of this platform is an offline-first Flutter mobile application 
 ```text
 mobile/      # Flutter app source code and local assets (Offline first)
 backend/     # FastAPI backend for managing books and text-to-gloss translation
-docs/        # Demo scripts, pitch materials, and architecture notes
+docs/        # Architecture and technical documentation
 ```
 
 ---
@@ -56,9 +56,3 @@ make run
 ```bash
 docker compose -f backend/docker-compose.yml up --build -d
 ```
-
----
-
-## 🚀 Pitch & Demo
-
-Use [docs/pitch.md](docs/pitch.md) and [docs/demo_script.md](docs/demo_script.md) to explore the hackathon presentation flow and demonstration steps.
