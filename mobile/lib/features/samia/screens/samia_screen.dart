@@ -42,6 +42,11 @@ class _SamiaScreenState extends State<SamiaScreen> {
   String _status = 'Starting Samia';
   String _lastHeard = '';
   String _lastHandledHeard = '';
+  String _lastSpokenText = '';
+  bool _suppressSpeechEvents = false;
+  DateTime _ignoreSpeechUntil = DateTime.fromMillisecondsSinceEpoch(0);
+
+  static const Duration _postSpeechSettleDelay = Duration(milliseconds: 1600);
 
   @override
   void initState() {
@@ -121,14 +126,18 @@ class _SamiaScreenState extends State<SamiaScreen> {
   }
 
   Future<void> _startListening() async {
-    if (!_speechAvailable || _speaking || !mounted) {
+    if (!_speechAvailable ||
+        _speaking ||
+        _shouldIgnoreSpeechInput ||
+        !mounted) {
       return;
     }
 
     try {
       if (_speech.isListening) {
-        await _speech.stop();
+        await _cancelListening();
       }
+      _suppressSpeechEvents = false;
       setState(() {
         _listening = true;
         _lastHeard = '';
@@ -159,16 +168,28 @@ class _SamiaScreenState extends State<SamiaScreen> {
 
   Future<void> _stopListening() async {
     if (_speech.isListening) {
-      await _speech.stop();
+      await _cancelListening();
     }
     if (mounted) {
       setState(() => _listening = false);
     }
   }
 
+  Future<void> _cancelListening() async {
+    _suppressSpeechEvents = true;
+    try {
+      await _speech.cancel();
+    } catch (_) {
+      // Speech cancellation is best-effort across Android speech services.
+    }
+  }
+
   void _handleSpeechResult(SpeechRecognitionResult result) {
     final words = result.recognizedWords.trim();
     if (!mounted) {
+      return;
+    }
+    if (_shouldIgnoreRecognizedWords(words)) {
       return;
     }
     setState(() => _lastHeard = words);
@@ -181,11 +202,19 @@ class _SamiaScreenState extends State<SamiaScreen> {
     if (!mounted) {
       return;
     }
+    if (_shouldIgnoreSpeechInput) {
+      if (_listening) {
+        setState(() => _listening = false);
+      }
+      return;
+    }
     if (status == SpeechToText.doneStatus ||
         status == SpeechToText.notListeningStatus) {
       setState(() => _listening = false);
       final words = _lastHeard.trim();
-      if (words.isNotEmpty && words != _lastHandledHeard) {
+      if (words.isNotEmpty &&
+          words != _lastHandledHeard &&
+          !_shouldIgnoreRecognizedWords(words)) {
         _processHeardCommand(words);
       } else if (!_speaking && _speechAvailable && _missedTurns < 2) {
         _missedTurns += 1;
@@ -198,6 +227,9 @@ class _SamiaScreenState extends State<SamiaScreen> {
 
   void _handleSpeechError(SpeechRecognitionError error) {
     if (!mounted) {
+      return;
+    }
+    if (_shouldIgnoreSpeechInput) {
       return;
     }
     setState(() {
@@ -217,7 +249,8 @@ class _SamiaScreenState extends State<SamiaScreen> {
     final cleanCommand = command.trim();
     if (assistant == null ||
         cleanCommand.isEmpty ||
-        cleanCommand == _lastHandledHeard) {
+        cleanCommand == _lastHandledHeard ||
+        _shouldIgnoreRecognizedWords(cleanCommand)) {
       return;
     }
 
@@ -390,6 +423,11 @@ class _SamiaScreenState extends State<SamiaScreen> {
   }
 
   Future<void> _speakOnly(String text) async {
+    _suppressSpeechEvents = true;
+    _lastSpokenText = text;
+    _lastHeard = '';
+    _lastHandledHeard = '';
+    _ignoreSpeechUntil = DateTime.now().add(_postSpeechSettleDelay);
     await _stopListening();
     if (!mounted) {
       return;
@@ -402,16 +440,67 @@ class _SamiaScreenState extends State<SamiaScreen> {
     if (!mounted) {
       return;
     }
+    _ignoreSpeechUntil = DateTime.now().add(_postSpeechSettleDelay);
     setState(() => _speaking = false);
   }
 
   Future<void> _speakThenListen(String text) async {
     await _speakOnly(text);
     if (!_speechAvailable || !mounted) {
+      _suppressSpeechEvents = false;
       return;
     }
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    await Future<void>.delayed(_postSpeechSettleDelay);
+    _ignoreSpeechUntil = DateTime.fromMillisecondsSinceEpoch(0);
+    _suppressSpeechEvents = false;
     await _startListening();
+  }
+
+  bool get _shouldIgnoreSpeechInput {
+    return _suppressSpeechEvents ||
+        _speaking ||
+        DateTime.now().isBefore(_ignoreSpeechUntil);
+  }
+
+  bool _shouldIgnoreRecognizedWords(String words) {
+    if (_shouldIgnoreSpeechInput) {
+      return true;
+    }
+
+    final recognized = _normalizeSpeech(words);
+    final spoken = _normalizeSpeech(_lastSpokenText);
+    if (recognized.isEmpty || spoken.isEmpty) {
+      return false;
+    }
+
+    if (recognized.length > 12 &&
+        (spoken.contains(recognized) || recognized.contains(spoken))) {
+      return true;
+    }
+
+    final recognizedTokens =
+        recognized.split(' ').where((token) => token.length > 3).toSet();
+    if (recognizedTokens.length < 3) {
+      return false;
+    }
+
+    final spokenTokens = spoken.split(' ').where((token) => token.length > 3);
+    final overlap =
+        spokenTokens.where((token) => recognizedTokens.contains(token)).length;
+    return overlap / recognizedTokens.length >= 0.66;
+  }
+
+  String _normalizeSpeech(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll(RegExp(r'[^\w\u0600-\u06FF ]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   Future<void> _handleDebugCommand() async {
