@@ -445,6 +445,18 @@ class SamiaVoiceAssistant {
       'بدا',
       'ابدأ',
       'موافق',
+      'oui',
+      'ouais',
+      'daccord',
+      "d'accord",
+      'bien sur',
+      'bien sûr',
+      'commence',
+      'lire',
+      'yalha',
+      'wakha',
+      'واخا',
+      'يالاه',
     ]);
   }
 
