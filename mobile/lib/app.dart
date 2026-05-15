@@ -25,7 +25,7 @@ class KitabLilJamieApp extends StatelessWidget {
       return buildRoute;
     }
 
-    return '/';
+    return '/samia';
   }
 
   static final GoRouter _router = GoRouter(

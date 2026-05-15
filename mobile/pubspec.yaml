@@ -17,6 +17,7 @@ dependencies:
   vibration: ^2.0.0
   webview_flutter: ^4.10.0
   dio: ^5.9.2
+  speech_to_text: ^7.3.0
 
 dev_dependencies:
   flutter_test:

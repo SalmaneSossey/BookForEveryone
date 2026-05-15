@@ -3,15 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kitab_lil_jamie/app.dart';
 
 void main() {
-  testWidgets('Onboarding exposes the three accessible reading paths', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('App opens Samia voice mode first', (WidgetTester tester) async {
     await tester.pumpWidget(const KitabLilJamieApp());
+    await tester.pumpAndSettle();
 
-    expect(find.text('KitabLilJamie'), findsOneWidget);
-    expect(find.text('كتاب للجميع'), findsOneWidget);
-    expect(find.text('Blind mode - Samia'), findsOneWidget);
-    expect(find.text('Deaf mode - SignBook'), findsOneWidget);
-    expect(find.text('Explore'), findsOneWidget);
+    expect(find.text('Samia'), findsOneWidget);
+    expect(find.text('Start listening'), findsOneWidget);
+    expect(find.text('Stop'), findsOneWidget);
+    expect(find.textContaining('Try saying:'), findsOneWidget);
   });
 }
