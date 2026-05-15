@@ -30,10 +30,13 @@ class _SamiaScreenState extends State<SamiaScreen> {
   SamiaVoiceAssistant? _assistant;
   List<Book> _books = const [];
   List<Book> _suggestions = const [];
+  List<LocaleName> _speechLocales = const [];
+  List<String> _preferredLocaleIds = const [];
   Book? _selectedBook;
   int _pageNumber = 1;
   int _readToken = 0;
   int _missedTurns = 0;
+  int _localeIndex = 0;
   bool _loading = true;
   bool _speechAvailable = false;
   bool _listening = false;
@@ -89,12 +92,17 @@ class _SamiaScreenState extends State<SamiaScreen> {
       );
       final locales = available ? await _speech.locales() : <LocaleName>[];
       final systemLocale = available ? await _speech.systemLocale() : null;
+      final preferredLocaleIds = _preferredLocales(locales, systemLocale);
       if (!mounted) {
         return;
       }
       setState(() {
         _speechAvailable = available;
-        _localeId = _chooseLocale(locales, systemLocale);
+        _speechLocales = locales;
+        _preferredLocaleIds = preferredLocaleIds;
+        _localeIndex = 0;
+        _localeId =
+            preferredLocaleIds.isEmpty ? null : preferredLocaleIds.first;
       });
     } catch (_) {
       if (!mounted) {
@@ -107,22 +115,63 @@ class _SamiaScreenState extends State<SamiaScreen> {
     }
   }
 
-  String? _chooseLocale(List<LocaleName> locales, LocaleName? systemLocale) {
-    final ids = locales.map((locale) => locale.localeId).toSet();
+  List<String> _preferredLocales(
+    List<LocaleName> locales,
+    LocaleName? systemLocale,
+  ) {
+    final ids = locales.map((locale) => locale.localeId).toList();
+    final preferred = <String>[];
     final systemId = systemLocale?.localeId;
+
+    for (final language in const ['ar', 'fr', 'en']) {
+      final exactCandidates = switch (language) {
+        'ar' => const ['ar_MA', 'ar-DZ', 'ar_DZ', 'ar_SA', 'ar_EG', 'ar'],
+        'fr' => const ['fr_MA', 'fr_FR', 'fr-CA', 'fr'],
+        _ => const ['en_US', 'en_GB', 'en'],
+      };
+      final match = _findLocale(ids, exactCandidates, language);
+      if (match != null && !preferred.contains(match)) {
+        preferred.add(match);
+      }
+    }
+
     if (systemId != null &&
         (systemId.startsWith('ar') ||
             systemId.startsWith('fr') ||
-            systemId.startsWith('en'))) {
-      return systemId;
+            systemId.startsWith('en')) &&
+        !preferred.contains(systemId)) {
+      preferred.add(systemId);
     }
 
-    for (final candidate in const ['ar_MA', 'ar_SA', 'en_US', 'fr_FR']) {
+    if (preferred.isEmpty && ids.isNotEmpty) {
+      preferred.add(ids.first);
+    }
+
+    return preferred;
+  }
+
+  String? _findLocale(
+    List<String> ids,
+    List<String> exactCandidates,
+    String language,
+  ) {
+    for (final candidate in exactCandidates) {
       if (ids.contains(candidate)) {
         return candidate;
       }
     }
-    return systemId ?? (ids.isEmpty ? null : ids.first);
+
+    final prefix = '${language}_';
+    final dashPrefix = '$language-';
+    for (final id in ids) {
+      final lower = id.toLowerCase();
+      if (lower == language ||
+          lower.startsWith(prefix) ||
+          lower.startsWith(dashPrefix)) {
+        return id;
+      }
+    }
+    return null;
   }
 
   Future<void> _startListening() async {
@@ -142,7 +191,8 @@ class _SamiaScreenState extends State<SamiaScreen> {
         _listening = true;
         _lastHeard = '';
         _lastHandledHeard = '';
-        _status = 'Listening. Say a book, topic, or command.';
+        _status =
+            'Listening in $_currentLocaleLabel. Say a book, topic, or command.';
       });
       await _speech.listen(
         onResult: _handleSpeechResult,
@@ -151,7 +201,7 @@ class _SamiaScreenState extends State<SamiaScreen> {
         localeId: _localeId,
         listenOptions: SpeechListenOptions(
           partialResults: true,
-          listenMode: ListenMode.confirmation,
+          listenMode: ListenMode.search,
         ),
       );
     } catch (_) {
@@ -257,6 +307,9 @@ class _SamiaScreenState extends State<SamiaScreen> {
     _lastHandledHeard = cleanCommand;
     _missedTurns = 0;
     await _stopListening();
+    if (await _handleLanguageCommand(cleanCommand)) {
+      return;
+    }
     await _handleResponse(assistant.handleCommand(cleanCommand));
   }
 
@@ -509,6 +562,116 @@ class _SamiaScreenState extends State<SamiaScreen> {
     await _processHeardCommand(command);
   }
 
+  Future<bool> _handleLanguageCommand(String command) async {
+    final normalized = _normalizeSpeech(command);
+    final asksForLanguage = normalized.contains('language') ||
+        normalized.contains('listen in') ||
+        normalized.contains('switch to') ||
+        normalized.contains('change to') ||
+        normalized.contains('لغه') ||
+        normalized.contains('لغة') ||
+        normalized.contains('بدل');
+
+    if (!asksForLanguage) {
+      return false;
+    }
+
+    final language = normalized.contains('arabic') ||
+            normalized.contains('darija') ||
+            normalized.contains('عربي') ||
+            normalized.contains('العربيه')
+        ? 'ar'
+        : normalized.contains('french') ||
+                normalized.contains('francais') ||
+                normalized.contains('français') ||
+                normalized.contains('فرنسي')
+            ? 'fr'
+            : normalized.contains('english') ||
+                    normalized.contains('انجليزي') ||
+                    normalized.contains('الانجليزيه')
+                ? 'en'
+                : null;
+
+    if (language == null) {
+      return false;
+    }
+
+    await _setListeningLanguage(language);
+    return true;
+  }
+
+  Future<void> _setListeningLanguage(String language) async {
+    final index = _preferredLocaleIds.indexWhere(
+      (id) => id.toLowerCase().startsWith(language),
+    );
+    if (index == -1) {
+      await _speakThenListen(
+        'That listening language is not available on this phone. I can use $_availableLanguageLabels.',
+      );
+      return;
+    }
+
+    setState(() {
+      _localeIndex = index;
+      _localeId = _preferredLocaleIds[index];
+    });
+    await _speakThenListen('Listening language set to $_currentLocaleLabel.');
+  }
+
+  Future<void> _cycleListeningLanguage() async {
+    if (_preferredLocaleIds.length <= 1) {
+      await _speakThenListen(
+        'Only $_currentLocaleLabel is available for speech recognition on this phone.',
+      );
+      return;
+    }
+
+    await _stopListening();
+    setState(() {
+      _localeIndex = (_localeIndex + 1) % _preferredLocaleIds.length;
+      _localeId = _preferredLocaleIds[_localeIndex];
+    });
+    await _speakThenListen('Listening language set to $_currentLocaleLabel.');
+  }
+
+  String get _currentLocaleLabel {
+    final id = _localeId;
+    if (id == null || id.isEmpty) {
+      return 'the phone default language';
+    }
+    final lower = id.toLowerCase();
+    if (lower.startsWith('ar')) {
+      return 'Arabic';
+    }
+    if (lower.startsWith('fr')) {
+      return 'French';
+    }
+    if (lower.startsWith('en')) {
+      return 'English';
+    }
+
+    final locale = _speechLocales.cast<LocaleName?>().firstWhere(
+          (locale) => locale?.localeId == id,
+          orElse: () => null,
+        );
+    return locale?.name ?? id;
+  }
+
+  String get _availableLanguageLabels {
+    final labels = [
+      for (final id in _preferredLocaleIds)
+        if (id.toLowerCase().startsWith('ar'))
+          'Arabic'
+        else if (id.toLowerCase().startsWith('fr'))
+          'French'
+        else if (id.toLowerCase().startsWith('en'))
+          'English'
+        else
+          id,
+    ];
+    return labels.toSet().join(', ');
+  }
+
   Future<void> _vibrate() async {
     try {
       if (await Vibration.hasVibrator()) {
@@ -630,6 +793,15 @@ class _SamiaScreenState extends State<SamiaScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            AccessibleButton(
+              label: 'Language: $_currentLocaleLabel',
+              icon: Icons.language,
+              outlined: true,
+              onPressed: _speechAvailable
+                  ? () async => _cycleListeningLanguage()
+                  : null,
             ),
             const SizedBox(height: 16),
             if (selectedBook != null)
