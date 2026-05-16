@@ -99,10 +99,9 @@ class _SamiaScreenState extends State<SamiaScreen> {
       setState(() {
         _speechAvailable = available;
         _speechLocales = locales;
-        _preferredLocaleIds = preferredLocaleIds;
+        _preferredLocaleIds = systemLocale != null ? [systemLocale.localeId] : [];
         _localeIndex = 0;
-        _localeId =
-            preferredLocaleIds.isEmpty ? null : preferredLocaleIds.first;
+        _localeId = systemLocale?.localeId ?? (locales.isNotEmpty ? locales.first.localeId : null);
       });
     } catch (_) {
       if (!mounted) {
@@ -192,7 +191,7 @@ class _SamiaScreenState extends State<SamiaScreen> {
         _lastHeard = '';
         _lastHandledHeard = '';
         _status =
-            'Listening in $_currentLocaleLabel. Say a book, topic, or command.';
+            'Listening... Say a book, topic, or command.';
       });
       await _speech.listen(
         onResult: _handleSpeechResult,
@@ -563,41 +562,7 @@ class _SamiaScreenState extends State<SamiaScreen> {
   }
 
   Future<bool> _handleLanguageCommand(String command) async {
-    final normalized = _normalizeSpeech(command);
-    final asksForLanguage = normalized.contains('language') ||
-        normalized.contains('listen in') ||
-        normalized.contains('switch to') ||
-        normalized.contains('change to') ||
-        normalized.contains('لغه') ||
-        normalized.contains('لغة') ||
-        normalized.contains('بدل');
-
-    if (!asksForLanguage) {
-      return false;
-    }
-
-    final language = normalized.contains('arabic') ||
-            normalized.contains('darija') ||
-            normalized.contains('عربي') ||
-            normalized.contains('العربيه')
-        ? 'ar'
-        : normalized.contains('french') ||
-                normalized.contains('francais') ||
-                normalized.contains('français') ||
-                normalized.contains('فرنسي')
-            ? 'fr'
-            : normalized.contains('english') ||
-                    normalized.contains('انجليزي') ||
-                    normalized.contains('الانجليزيه')
-                ? 'en'
-                : null;
-
-    if (language == null) {
-      return false;
-    }
-
-    await _setListeningLanguage(language);
-    return true;
+    return false; // Disabled language switching for demo
   }
 
   Future<void> _setListeningLanguage(String language) async {
@@ -685,7 +650,8 @@ class _SamiaScreenState extends State<SamiaScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+      backgroundColor: AppColors.bg,body: Center(child: CircularProgressIndicator()));
     }
 
     final selectedBook = _selectedBook;
@@ -698,6 +664,7 @@ class _SamiaScreenState extends State<SamiaScreen> {
                 : 'Microphone unavailable';
 
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Samia'),
         actions: [
