@@ -49,7 +49,7 @@ class _SamiaScreenState extends State<SamiaScreen> {
   bool _suppressSpeechEvents = false;
   DateTime _ignoreSpeechUntil = DateTime.fromMillisecondsSinceEpoch(0);
 
-  static const Duration _postSpeechSettleDelay = Duration(milliseconds: 1600);
+  static const Duration _postSpeechSettleDelay = Duration(milliseconds: 300);
 
   @override
   void initState() {
@@ -195,8 +195,8 @@ class _SamiaScreenState extends State<SamiaScreen> {
       });
       await _speech.listen(
         onResult: _handleSpeechResult,
-        listenFor: const Duration(seconds: 9),
-        pauseFor: const Duration(seconds: 2),
+        listenFor: const Duration(seconds: 15),
+        pauseFor: const Duration(seconds: 4),
         localeId: _localeId,
         listenOptions: SpeechListenOptions(
           partialResults: true,
