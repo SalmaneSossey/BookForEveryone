@@ -1017,9 +1017,9 @@ Expected:
 
 ---
 
-## 18. Coding Rules for Codex
+## 18. Coding Rules 
 
-When using Codex in VS Code, follow these rules:
+ follow these rules:
 
 1. Do not generate the whole project in one huge step.
 2. Create files phase by phase.
