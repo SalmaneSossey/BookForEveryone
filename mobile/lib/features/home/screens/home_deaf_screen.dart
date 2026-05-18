@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/models/book.dart';
 import '../../../core/services/book_repository.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/book_card.dart';
 
 class HomeDeafScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _HomeDeafScreenState extends State<HomeDeafScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('SignBook'),
         actions: [

@@ -125,18 +125,25 @@ class _ReadingScreenState extends State<ReadingScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     final book = _book;
     if (book == null) {
-      return const Scaffold(body: Center(child: Text('Book not found')));
+      return const Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Center(child: Text('Book not found')),
+      );
     }
 
     final page = _currentPage;
     final isRtl = book.language == 'ar';
 
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(title: Text(book.title)),
       body: SafeArea(
         child: ListView(
